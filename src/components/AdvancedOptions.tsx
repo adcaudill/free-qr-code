@@ -85,7 +85,7 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
 function clamp(v: number, min: number, max: number) { return Math.min(max, Math.max(min, v)); }
 
 // Simple heuristic auto-fix: increase contrast using black/white if low, reduce logo size, bump error correction, ensure margin.
-function autoFixLogic(config: QrConfig): Partial<QrConfig> {
+export function autoFixLogic(config: QrConfig): Partial<QrConfig> {
     const patch: Partial<QrConfig> = {};
     // If foreground/background contrast is low, set to black on white.
     // Basic check reusing logic by direct contrast calc through assessScanability call.
