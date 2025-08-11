@@ -12,14 +12,12 @@ class FRMock {
         setTimeout(() => this.onload && this.onload(), 0);
     }
 }
-// @ts-expect-error override global
 global.FileReader = FRMock as unknown as typeof FileReader;
 
 // 10x10 red png
 const testImageDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGD4z0AEYBxVSFUBCzAY1AEj0cQgGg0GABn6Axf+qPuEAAAAAElFTkSuQmCC';
 
 // Mock Image to instantly load and have fixed dimensions 10x10
-// @ts-expect-error override global
 global.Image = class {
     onload: null | (() => void) = null;
     width = 10;

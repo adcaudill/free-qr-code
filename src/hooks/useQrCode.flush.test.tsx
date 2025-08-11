@@ -15,7 +15,6 @@ class FakeQr {
 }
 vi.mock('qr-code-styling', () => ({ default: FakeQr }));
 // Fast image loader
-// @ts-expect-error override
 global.Image = class { onload: null | (() => void) = null; set src(_v: string) { setTimeout(() => this.onload && this.onload(), 0); } } as unknown as typeof Image;
 
 function cfg(p: Partial<QrConfig>): QrConfig { return { ...defaultConfig, ...p } as QrConfig; }

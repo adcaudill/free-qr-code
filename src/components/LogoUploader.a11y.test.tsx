@@ -4,13 +4,10 @@ import { LogoUploader } from './LogoUploader';
 import { defaultConfig } from '../types';
 
 class FRMock { onload: null | (() => void) = null; result: string | ArrayBuffer | null = null; readAsDataURL(_f: File) { this.result = testImage; setTimeout(() => this.onload && this.onload(), 0); } }
-// @ts-expect-error override
 global.FileReader = FRMock as unknown as typeof FileReader;
 const testImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQoU2NkYGD4z0AEYBxVSFUBCzAY1AEj0cQgGg0GABn6Axf+qPuEAAAAAElFTkSuQmCC';
-// @ts-expect-error override
 global.Image = class { onload: null | (() => void) = null; width = 10; height = 10; _src = ''; set src(v: string) { this._src = v; setTimeout(() => this.onload && this.onload(), 0); } get src() { return this._src; } } as unknown as typeof Image;
-// @ts-expect-error mock 2d context
-HTMLCanvasElement.prototype.getContext = function (id: string) { if (id === '2d') return { canvas: this, drawImage: () => { } } as any; return null; } as any;
+HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, id: string) { if (id === '2d') return { canvas: this, drawImage: () => { } } as any; return null; } as any;
 HTMLCanvasElement.prototype.toDataURL = () => 'data:image/png;base64,MOCK';
 function makeFile() { return new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' }); }
 

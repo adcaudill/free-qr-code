@@ -20,7 +20,6 @@ class FakeQr {
 vi.mock('qr-code-styling', () => ({ default: FakeQr }));
 
 // Fast-loading Image mock so logo path resolves immediately
-// @ts-expect-error override for test environment
 global.Image = class { onload: null | (() => void) = null; set src(_v: string) { setTimeout(() => this.onload && this.onload(), 0); } } as unknown as typeof Image;
 
 function cfg(overrides: Partial<QrConfig>): QrConfig { return { ...defaultConfig, ...overrides } as QrConfig; }

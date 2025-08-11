@@ -22,7 +22,7 @@ class FakeQr {
 vi.mock('qr-code-styling', () => ({ default: FakeQr }));
 
 // Mock Image to invoke onload immediately when src is set (so hook's image load promise resolves)
-// @ts-expect-error overriding global Image for test
+// Override global Image for test environment
 global.Image = class {
     onload: null | (() => void) = null;
     onerror: null | (() => void) = null;
@@ -32,6 +32,18 @@ global.Image = class {
 
 const baseConfig: QrConfig = {
     text: 'https://example.com',
+    contentType: 'url',
+    url: 'https://example.com',
+    wifi: { ssid: '', password: '', security: 'WPA', hidden: false },
+    vcard: { firstName: '', lastName: '', org: '', title: '', phone: '', email: '', url: '' },
+    sms: { phone: '', message: '' },
+    dotStyle: 'rounded',
+    cornerSquareStyle: 'square',
+    cornerDotStyle: 'dot',
+    useGradient: false,
+    gradientColor: '#0055FF',
+    gradientType: 'linear',
+    gradientRotation: 0,
     size: 300,
     margin: 4,
     foreground: '#000000',
