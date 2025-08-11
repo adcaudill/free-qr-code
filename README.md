@@ -1,11 +1,14 @@
 # free-qr-code
 
+![CI](https://github.com/adcaudill/free-qr-code/actions/workflows/ci.yml/badge.svg)
+
 Free, client-side QR code generator. No ads. No tracking. No redirects.
 
 ## Features
 
 - Instant QR generation for URLs
 - Advanced options (size, error correction, margin, colors, logo overlay, PNG/SVG export)
+- Scan quality assessment with one-click auto-fix suggestions
 - Logo upload processed locally (never leaves your browser)
 - Dark / light mode with system preference detection
 - Accessible, responsive single-page app

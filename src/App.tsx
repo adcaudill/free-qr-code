@@ -75,7 +75,9 @@ export const App: React.FC = () => {
                 </Stack>
                 <Faq />
                 <Typography variant="caption" display="block" textAlign="center" mt={8} color="text.secondary">
-                    Built with React + MUI. All processing is local. MIT License. © {new Date().getFullYear()}.
+                    © {new Date().getFullYear()}
+                    <Link href="https://adamcaudill.com" underline="hover" sx={{ ml: 0.5 }}>Adam Caudill</Link> |
+                    <Link href="https://github.com/adcaudill/free-qr-code" underline="hover" sx={{ ml: 0.5 }}>GitHub</Link>
                 </Typography>
             </Container>
         </ThemeProvider>

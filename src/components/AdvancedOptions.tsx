@@ -1,5 +1,5 @@
-import React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip } from '@mui/material';
+import React, { useCallback } from 'react';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { QrConfig } from '../types';
 import { assessScanability } from '../utils/scanQuality';
@@ -17,6 +17,12 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
         logoSizeRatio: config.logoSizeRatio,
         margin: config.margin
     });
+
+    const autoFix = useCallback(() => {
+        const patch = autoFixLogic(config);
+        if (Object.keys(patch).length) onChange(patch);
+    }, [config, onChange]);
+
     return (
         <Accordion sx={{ mt: 2 }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>Advanced Options</AccordionSummary>
@@ -60,7 +66,9 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
                             <Typography variant="body2" color="text.secondary">
                                 Tip: Higher error correction (Q/H) allows for larger logos but increases density. Keep strong contrast.
                             </Typography>
-                            <Alert severity={assessment.contrastOk && assessment.logoRisk === 'low' ? 'success' : 'warning'} variant="outlined">
+                            <Alert severity={assessment.contrastOk && assessment.logoRisk === 'low' ? 'success' : 'warning'} variant="outlined" action={
+                                (assessment.recommendations.length > 0) && <Button size="small" onClick={autoFix}>Auto-fix</Button>
+                            }>
                                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                     <Chip size="small" label={`Contrast ${assessment.contrastRatio}: ${assessment.contrastOk ? 'OK' : 'Low'}`} color={assessment.contrastOk ? 'success' : 'warning'} variant={assessment.contrastOk ? 'filled' : 'outlined'} />
                                     <Chip size="small" label={`Logo risk: ${assessment.logoRisk}`} color={assessment.logoRisk === 'high' ? 'error' : assessment.logoRisk === 'moderate' ? 'warning' : 'success'} variant={assessment.logoRisk === 'low' ? 'filled' : 'outlined'} />
@@ -76,3 +84,29 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
 };
 
 function clamp(v: number, min: number, max: number) { return Math.min(max, Math.max(min, v)); }
+
+// Simple heuristic auto-fix: increase contrast using black/white if low, reduce logo size, bump error correction, ensure margin.
+function autoFixLogic(config: QrConfig): Partial<QrConfig> {
+    const patch: Partial<QrConfig> = {};
+    // If foreground/background contrast is low, set to black on white.
+    // Basic check reusing logic by direct contrast calc through assessScanability call.
+    const a = assessScanability({
+        foreground: config.foreground,
+        background: config.background,
+        errorCorrection: config.errorCorrection,
+        logoSizeRatio: config.logoSizeRatio,
+        margin: config.margin
+    });
+    if (!a.contrastOk) {
+        patch.foreground = '#000000';
+        patch.background = '#ffffff';
+    }
+    if (a.logoRisk !== 'low') {
+        patch.logoSizeRatio = Math.min(config.logoSizeRatio, 0.18);
+        if (config.errorCorrection !== 'H') patch.errorCorrection = 'H';
+    }
+    if (config.margin < 2) patch.margin = 2;
+    return patch;
+}
+
+// Wrap autoFixLogic to access latest props via closure (added after component to avoid re-definition in render path)
