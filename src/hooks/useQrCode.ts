@@ -56,23 +56,31 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
             backgroundOptions: { color: config.background },
             dotsOptions: { color: config.foreground },
         });
-        if (config.logoFile) {
-            const file = config.logoFile;
+        const logoSource = config.logoCroppedDataUrl;
+        if (logoSource) {
+            instanceRef.current.update({
+                image: logoSource,
+                imageOptions: {
+                    crossOrigin: 'anonymous',
+                    hideBackgroundDots: true,
+                    imageSize: config.logoSizeRatio,
+                    margin: 4
+                }
+            });
+        } else if (config.logoFile) {
             const reader = new FileReader();
             reader.onload = () => {
                 instanceRef.current?.update({
                     image: reader.result as string,
                     imageOptions: {
                         crossOrigin: 'anonymous',
-                        // Clear QR modules behind the logo so it stands out
                         hideBackgroundDots: true,
                         imageSize: config.logoSizeRatio,
-                        // Slightly larger margin to create a clean “knockout” region
                         margin: 4
                     }
                 });
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(config.logoFile);
         } else {
             instanceRef.current.update({ image: undefined });
         }

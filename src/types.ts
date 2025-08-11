@@ -8,6 +8,7 @@ export interface QrConfig {
     foreground: string; // hex
     background: string; // hex
     logoFile?: File;
+    logoCroppedDataUrl?: string; // optional processed/cropped image
     logoSizeRatio: number; // 0 - 0.5 typically
     format: 'png' | 'svg';
 }
