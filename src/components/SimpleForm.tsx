@@ -25,7 +25,7 @@ export const SimpleForm: React.FC<Props> = ({ url, onChange, onDownload, disable
                 <TextField label="URL" fullWidth value={url} onChange={handleChange} error={!!error} helperText={error || ' '} size="small" autoFocus placeholder="https://example.com" />
                 <Tooltip title={error ? 'Fix URL first' : 'Download as PNG'}>
                     <span>
-                        <Button variant="contained" size="medium" type="submit" disabled={!!error || disabled}>Download PNG</Button>
+                        <Button variant="contained" size="medium" type="submit" disabled={!!error || disabled}>Download</Button>
                     </span>
                 </Tooltip>
             </Stack>
