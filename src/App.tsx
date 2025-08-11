@@ -9,6 +9,7 @@ import { Faq } from './components/Faq';
 import { ThemeProvider } from '@mui/material/styles';
 import { buildTheme } from './theme';
 import { defaultConfig, QrConfig } from './types';
+import { buildQrData } from './utils/contentBuilders';
 import { useQrCode } from './hooks/useQrCode';
 import { ThemeToggle } from './components/ThemeToggle';
 import { normalizeUrl } from './utils/validation';
@@ -24,9 +25,11 @@ export const App: React.FC = () => {
         setConfig(c => ({ ...c, ...p }));
     }
 
-    function handleUrlChange(v: string) {
-        patch({ text: normalizeUrl(v) });
-    }
+    // Ensure text stays in sync when content changes
+    React.useEffect(() => {
+        setConfig(c => ({ ...c, text: buildQrData(c) }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config.contentType, config.url, config.wifi, config.vcard, config.sms]);
 
     async function handleDownload() {
         const blob = config.format === 'png' ? await toPng() : await toSvg();
@@ -66,7 +69,7 @@ export const App: React.FC = () => {
                 <Hero />
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="stretch">
                     <Stack flex={1} spacing={2}>
-                        <SimpleForm url={config.text} onChange={handleUrlChange} onDownload={handleDownload} disabled={!isReady || !config.text} />
+                        <SimpleForm config={config} onPatch={patch} onDownload={handleDownload} disabled={!isReady || !config.text} />
                         <AdvancedOptions config={config} onChange={patch} />
                     </Stack>
                     <Paper sx={{ p: 2, flexBasis: 340, flexGrow: 0 }}>

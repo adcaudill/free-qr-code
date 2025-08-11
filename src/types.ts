@@ -1,7 +1,12 @@
 export type ErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
 
 export interface QrConfig {
-    text: string;
+    text: string; // derived encoded text used by generator
+    contentType: 'url' | 'wifi' | 'vcard' | 'sms';
+    url?: string; // original user URL input
+    wifi?: { ssid: string; password: string; security: 'WPA' | 'WEP' | 'nopass'; hidden: boolean };
+    vcard?: { firstName: string; lastName: string; org: string; title: string; phone: string; email: string; url: string; }; // minimal vCard fields
+    sms?: { phone: string; message: string };
     size: number; // pixels
     errorCorrection: ErrorCorrectionLevel;
     margin: number; // quiet zone
@@ -15,6 +20,11 @@ export interface QrConfig {
 
 export const defaultConfig: QrConfig = {
     text: '',
+    contentType: 'url',
+    url: '',
+    wifi: { ssid: '', password: '', security: 'WPA', hidden: false },
+    vcard: { firstName: '', lastName: '', org: '', title: '', phone: '', email: '', url: '' },
+    sms: { phone: '', message: '' },
     size: 256,
     errorCorrection: 'M',
     margin: 4,

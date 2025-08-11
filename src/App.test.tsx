@@ -10,7 +10,7 @@ describe('App', () => {
         render(<App />);
         // App bar title
         expect(screen.getAllByText(/Free QR/i)[0]).toBeTruthy();
-        // URL input by label
-        expect(screen.getByLabelText(/URL/i)).toBeTruthy();
+        // URL tab selected by default and input visible
+        expect(screen.getByLabelText(/URL/i)).toBeInTheDocument();
     });
 });

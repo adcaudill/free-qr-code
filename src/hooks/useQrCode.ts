@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { QrConfig } from '../types';
+import { buildQrData } from '../utils/contentBuilders';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QrCodeStylingType = any;
@@ -30,7 +31,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
                     width: config.size,
                     height: config.size,
                     type: 'svg',
-                    data: config.text || 'https://',
+                    data: buildQrData(config) || 'https://',
                     margin: config.margin,
                     qrOptions: { errorCorrectionLevel: config.errorCorrection },
                     backgroundOptions: { color: config.background },
@@ -54,7 +55,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
         instanceRef.current.update({
             width: config.size,
             height: config.size,
-            data: config.text || 'https://',
+            data: buildQrData(config) || 'https://',
             margin: config.margin,
             qrOptions: { errorCorrectionLevel: config.errorCorrection },
             backgroundOptions: { color: config.background },
