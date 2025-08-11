@@ -4,8 +4,9 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import { Hero } from './components/Hero';
 import { SimpleForm } from './components/SimpleForm';
 import { QrPreview } from './components/QrPreview';
-import { AdvancedOptions } from './components/AdvancedOptions';
-import { Faq } from './components/Faq';
+// Lazy-loaded heavy below-the-fold / complex configuration panels
+const AdvancedOptions = React.lazy(() => import('./components/AdvancedOptions').then(m => ({ default: m.AdvancedOptions })));
+const Faq = React.lazy(() => import('./components/Faq').then(m => ({ default: m.Faq })));
 import { ThemeProvider } from '@mui/material/styles';
 import { buildTheme } from './theme';
 import { defaultConfig, QrConfig } from './types';
@@ -70,13 +71,17 @@ export const App: React.FC = () => {
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="stretch">
                     <Stack flex={1} spacing={2}>
                         <SimpleForm config={config} onPatch={patch} onDownload={handleDownload} disabled={!isReady || !config.text} />
-                        <AdvancedOptions config={config} onChange={patch} />
+                        <React.Suspense fallback={<Paper sx={{ p: 2 }}><Typography variant="body2">Loading advanced options…</Typography></Paper>}>
+                            <AdvancedOptions config={config} onChange={patch} />
+                        </React.Suspense>
                     </Stack>
                     <Paper sx={{ p: 2, flexBasis: 340, flexGrow: 0 }}>
                         <QrPreview qrRef={qrRef} ready={isReady} />
                     </Paper>
                 </Stack>
-                <Faq />
+                <React.Suspense fallback={<Typography mt={8} variant="body2" color="text.secondary">Loading FAQ…</Typography>}>
+                    <Faq />
+                </React.Suspense>
                 <Typography variant="caption" display="block" textAlign="center" mt={8} color="text.secondary">
                     © {new Date().getFullYear()}
                     <Link href="https://adamcaudill.com" underline="hover" sx={{ ml: 0.5 }}>Adam Caudill</Link> |
