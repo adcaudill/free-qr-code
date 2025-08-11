@@ -36,6 +36,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     const imageLoadPromiseRef = useRef<Promise<void> | null>(null);
     const debounceTimerRef = useRef<number | null>(null);
     const updatePromiseRef = useRef<Promise<void> | null>(null);
+    const updateResolveRef = useRef<(() => void) | null>(null);
 
     // Lazy load library once
     useEffect(() => {
@@ -124,13 +125,14 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     const scheduleUpdate = useCallback(() => {
         if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
         updatePromiseRef.current = new Promise<void>(resolve => {
+            updateResolveRef.current = resolve;
             debounceTimerRef.current = window.setTimeout(() => {
                 applyConfig();
-                // Wait on image load if present
                 if (imageLoadPromiseRef.current) {
-                    imageLoadPromiseRef.current.then(() => resolve());
+                    imageLoadPromiseRef.current.then(() => { resolve(); updateResolveRef.current = null; });
                 } else {
                     resolve();
+                    updateResolveRef.current = null;
                 }
             }, 200);
         });
@@ -144,10 +146,15 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
 
     const flushPending = async () => {
         if (debounceTimerRef.current) {
-            // force immediate update
             window.clearTimeout(debounceTimerRef.current);
             debounceTimerRef.current = null;
             applyConfig();
+            // Resolve pending promise manually since timer callback won't fire
+            if (updateResolveRef.current) {
+                const r = updateResolveRef.current;
+                updateResolveRef.current = null;
+                r();
+            }
         }
         if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
         if (updatePromiseRef.current) await updatePromiseRef.current;
