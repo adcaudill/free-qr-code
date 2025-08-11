@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Box, Button, Stack, Typography, Slider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import type { QrConfig } from '../types';
 
@@ -95,6 +95,58 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
         setSelection({ x, y, size });
     };
 
+    const moveSelection = useCallback((dx: number, dy: number) => {
+        setSelection(s => {
+            if (!image) return s;
+            let x = s.x + dx;
+            let y = s.y + dy;
+            x = Math.max(0, Math.min(x, image.width - s.size));
+            y = Math.max(0, Math.min(y, image.height - s.size));
+            return { ...s, x, y };
+        });
+    }, [image]);
+
+    const resizeSelection = useCallback((delta: number) => {
+        setSelection(s => {
+            if (!image) return s;
+            let size = s.size + delta;
+            size = Math.max(32, Math.min(size, Math.min(image.width, image.height)));
+            if (s.x + size > image.width) size = image.width - s.x;
+            if (s.y + size > image.height) size = image.height - s.y;
+            return { ...s, size };
+        });
+    }, [image]);
+
+    const onKeyDown = (e: React.KeyboardEvent) => {
+        if (!image) return;
+        const step = e.altKey ? 10 : 1; // allow faster movement with Alt
+        switch (e.key) {
+            case 'ArrowLeft':
+                if (e.shiftKey) resizeSelection(-step); else moveSelection(-step, 0); e.preventDefault(); break;
+            case 'ArrowRight':
+                if (e.shiftKey) resizeSelection(step); else moveSelection(step, 0); e.preventDefault(); break;
+            case 'ArrowUp':
+                if (e.shiftKey) resizeSelection(step); else moveSelection(0, -step); e.preventDefault(); break;
+            case 'ArrowDown':
+                if (e.shiftKey) resizeSelection(-step); else moveSelection(0, step); e.preventDefault(); break;
+            case '+':
+            case '=':
+                resizeSelection(step); e.preventDefault(); break;
+            case '-':
+            case '_':
+                resizeSelection(-step); e.preventDefault(); break;
+            default:
+                break;
+        }
+    };
+
+    // Auto focus crop container when dialog opens with image
+    useEffect(() => {
+        if (dialogOpen && image && containerRef.current) {
+            containerRef.current.focus();
+        }
+    }, [dialogOpen, image]);
+
     return (
         <Box>
             <Box
@@ -116,11 +168,20 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
                             <Box
                                 ref={containerRef}
-                                sx={{ position: 'relative', width: image.width * scale, height: image.height * scale, userSelect: 'none' }}
+                                sx={{ position: 'relative', width: image.width * scale, height: image.height * scale, userSelect: 'none', outline: 'none' }}
                                 onMouseDown={onMouseDown}
                                 onMouseMove={onMouseMove}
                                 onMouseUp={endDrag}
                                 onMouseLeave={endDrag}
+                                onKeyDown={onKeyDown}
+                                role="group"
+                                aria-label="Crop selection. Arrow keys move. Shift+Arrow resize. Alt for faster movement."
+                                tabIndex={0}
+                                aria-roledescription="crop area"
+                                aria-describedby="crop-instructions"
+                                data-crop-x={selection.x}
+                                data-crop-y={selection.y}
+                                data-crop-size={selection.size}
                             >
                                 <img
                                     src={image.src}
@@ -151,6 +212,9 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                             <Slider min={32} max={Math.min(image.width, image.height)} value={selection.size} onChange={sliderChange} />
                         </Stack>
                     )}
+                    <Box id="crop-instructions" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, border: 0, clip: 'rect(0 0 0 0)', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        Use arrow keys to move the crop. Hold Shift + arrow to resize. Hold Alt for bigger steps. Press Apply to confirm.
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
