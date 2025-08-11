@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button, FormControlLabel, Switch } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { QrConfig } from '../types';
 import { assessScanability } from '../utils/scanQuality';
@@ -46,6 +46,43 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
                     <Grid item xs={12} sm={6} md={4}>
                         <TextField type="color" label="Background" aria-label="Background color" value={config.background} onChange={e => onChange({ background: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
                     </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                        <TextField select fullWidth label="Dot Style" value={config.dotStyle} onChange={e => onChange({ dotStyle: e.target.value as any })} size="small">
+                            {['square', 'rounded', 'dots', 'classy', 'classy-rounded', 'extra-rounded'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                        <TextField select fullWidth label="Corner Squares" value={config.cornerSquareStyle} onChange={e => onChange({ cornerSquareStyle: e.target.value as any })} size="small">
+                            {['square', 'extra-rounded'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                        <TextField select fullWidth label="Corner Dots" value={config.cornerDotStyle} onChange={e => onChange({ cornerDotStyle: e.target.value as any })} size="small">
+                            {['dot', 'square'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                        <FormControlLabel control={<Switch checked={config.useGradient} onChange={e => onChange({ useGradient: e.target.checked })} />} label="Gradient" />
+                    </Grid>
+                    {config.useGradient && (
+                        <>
+                            <Grid item xs={12} sm={6} md={4}>
+                                <TextField type="color" label="2nd Color" aria-label="Gradient second color" value={config.gradientColor} onChange={e => onChange({ gradientColor: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} />
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={4}>
+                                <TextField select fullWidth label="Gradient Type" value={config.gradientType} onChange={e => onChange({ gradientType: e.target.value as any })} size="small">
+                                    <MenuItem value="linear">Linear</MenuItem>
+                                    <MenuItem value="radial">Radial</MenuItem>
+                                </TextField>
+                            </Grid>
+                            {config.gradientType === 'linear' && (
+                                <Grid item xs={12} sm={6} md={4}>
+                                    <Typography variant="caption" gutterBottom>Rotation</Typography>
+                                    <Slider size="small" value={config.gradientRotation} onChange={(_, v) => onChange({ gradientRotation: v as number })} min={0} max={360} />
+                                </Grid>
+                            )}
+                        </>
+                    )}
                     <Grid item xs={12}>
                         <Typography variant="caption" display="block" gutterBottom>Logo (drag & drop + crop)</Typography>
                         <LogoUploader config={config} onChange={onChange} />

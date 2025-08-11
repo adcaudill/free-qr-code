@@ -2,6 +2,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { QrConfig } from '../types';
 import { buildQrData } from '../utils/contentBuilders';
 
+function gradientOrSolidDots(config: QrConfig) {
+    if (config.useGradient) {
+        return {
+            type: config.dotStyle,
+            gradient: {
+                type: config.gradientType,
+                rotation: (config.gradientRotation * Math.PI) / 180,
+                colorStops: [
+                    { offset: 0, color: config.foreground },
+                    { offset: 1, color: config.gradientColor }
+                ]
+            }
+        };
+    }
+    return { color: config.foreground, type: config.dotStyle };
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QrCodeStylingType = any;
 
@@ -35,7 +52,9 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
                     margin: config.margin,
                     qrOptions: { errorCorrectionLevel: config.errorCorrection },
                     backgroundOptions: { color: config.background },
-                    dotsOptions: { color: config.foreground, type: 'rounded' },
+                    dotsOptions: gradientOrSolidDots(config),
+                    cornersSquareOptions: { type: config.cornerSquareStyle, color: config.foreground },
+                    cornersDotOptions: { type: config.cornerDotStyle, color: config.foreground }
                 });
             }
             if (!cancelled && containerRef.current && instanceRef.current) {
@@ -59,7 +78,9 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
             margin: config.margin,
             qrOptions: { errorCorrectionLevel: config.errorCorrection },
             backgroundOptions: { color: config.background },
-            dotsOptions: { color: config.foreground },
+            dotsOptions: gradientOrSolidDots(config),
+            cornersSquareOptions: { type: config.cornerSquareStyle, color: config.foreground },
+            cornersDotOptions: { type: config.cornerDotStyle, color: config.foreground },
             image: undefined
         });
 

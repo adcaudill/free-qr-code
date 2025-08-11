@@ -7,6 +7,14 @@ export interface QrConfig {
     wifi?: { ssid: string; password: string; security: 'WPA' | 'WEP' | 'nopass'; hidden: boolean };
     vcard?: { firstName: string; lastName: string; org: string; title: string; phone: string; email: string; url: string; }; // minimal vCard fields
     sms?: { phone: string; message: string };
+    // Styling
+    dotStyle: 'square' | 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'extra-rounded';
+    cornerSquareStyle: 'square' | 'extra-rounded';
+    cornerDotStyle: 'dot' | 'square';
+    useGradient: boolean;
+    gradientColor: string; // second color for gradient
+    gradientType: 'linear' | 'radial';
+    gradientRotation: number; // degrees 0-360
     size: number; // pixels
     errorCorrection: ErrorCorrectionLevel;
     margin: number; // quiet zone
@@ -25,6 +33,13 @@ export const defaultConfig: QrConfig = {
     wifi: { ssid: '', password: '', security: 'WPA', hidden: false },
     vcard: { firstName: '', lastName: '', org: '', title: '', phone: '', email: '', url: '' },
     sms: { phone: '', message: '' },
+    dotStyle: 'rounded',
+    cornerSquareStyle: 'square',
+    cornerDotStyle: 'dot',
+    useGradient: false,
+    gradientColor: '#0055FF',
+    gradientType: 'linear',
+    gradientRotation: 0,
     size: 256,
     errorCorrection: 'M',
     margin: 4,
