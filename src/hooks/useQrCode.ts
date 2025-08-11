@@ -64,9 +64,11 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
                     image: reader.result as string,
                     imageOptions: {
                         crossOrigin: 'anonymous',
-                        hideBackgroundDots: false,
+                        // Clear QR modules behind the logo so it stands out
+                        hideBackgroundDots: true,
                         imageSize: config.logoSizeRatio,
-                        margin: 2
+                        // Slightly larger margin to create a clean “knockout” region
+                        margin: 4
                     }
                 });
             };
