@@ -42,21 +42,29 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     useEffect(() => {
         let cancelled = false;
         (async () => {
+            // In certain test/SSR teardown phases window can be undefined; bail early.
+            if (typeof window === 'undefined') return;
             if (!instanceRef.current) {
-                const mod = await import('qr-code-styling');
-                const QrCodeStyling = (mod as any).default || mod; // dynamic
-                instanceRef.current = new QrCodeStyling({
-                    width: config.size,
-                    height: config.size,
-                    type: 'svg',
-                    data: buildQrData(config) || 'https://',
-                    margin: config.margin,
-                    qrOptions: { errorCorrectionLevel: config.errorCorrection },
-                    backgroundOptions: { color: config.background },
-                    dotsOptions: gradientOrSolidDots(config),
-                    cornersSquareOptions: { type: config.cornerSquareStyle, color: config.foreground },
-                    cornersDotOptions: { type: config.cornerDotStyle, color: config.foreground }
-                });
+                try {
+                    const mod = await import('qr-code-styling');
+                    if (cancelled || typeof window === 'undefined') return;
+                    const QrCodeStyling = (mod as any).default || mod; // dynamic
+                    instanceRef.current = new QrCodeStyling({
+                        width: config.size,
+                        height: config.size,
+                        type: 'svg',
+                        data: buildQrData(config) || 'https://',
+                        margin: config.margin,
+                        qrOptions: { errorCorrectionLevel: config.errorCorrection },
+                        backgroundOptions: { color: config.background },
+                        dotsOptions: gradientOrSolidDots(config),
+                        cornersSquareOptions: { type: config.cornerSquareStyle, color: config.foreground },
+                        cornersDotOptions: { type: config.cornerDotStyle, color: config.foreground }
+                    });
+                } catch {
+                    // Swallow import errors in non-browser (tests/SSR) contexts; hook will remain not ready.
+                    return;
+                }
             }
             if (!cancelled && containerRef.current && instanceRef.current) {
                 containerRef.current.innerHTML = '';
