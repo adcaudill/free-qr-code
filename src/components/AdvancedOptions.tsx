@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { QrConfig } from '../types';
 import { assessScanability } from '../utils/scanQuality';
@@ -45,10 +46,34 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
                     <Grid item xs={12} sm={6} md={4}>
                         <TextField type="color" label="Background" aria-label="Background color" value={config.background} onChange={e => onChange({ background: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12}>
                         <Box>
                             <Typography variant="caption" display="block" gutterBottom>Logo (center)</Typography>
-                            <input aria-label="Logo image file" type="file" accept="image/*" onChange={e => onChange({ logoFile: e.target.files?.[0] })} style={{ display: 'block' }} />
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <input
+                                    id="logo-upload"
+                                    aria-label="Choose logo image file"
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={e => onChange({ logoFile: e.target.files?.[0] })}
+                                />
+                                <label htmlFor="logo-upload">
+                                    <Button component="span" variant="outlined" size="small">Choose File</Button>
+                                </label>
+                                <Typography
+                                    variant="body2"
+                                    sx={{ maxWidth: { xs: 160, sm: 260 }, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    aria-live="polite"
+                                >
+                                    {config.logoFile ? config.logoFile.name : 'No file'}
+                                </Typography>
+                                {config.logoFile && (
+                                    <IconButton aria-label="Remove logo" size="small" onClick={() => onChange({ logoFile: undefined })}>
+                                        <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                )}
+                            </Stack>
                         </Box>
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
