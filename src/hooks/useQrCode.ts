@@ -15,6 +15,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     const containerRef = useRef<HTMLDivElement>(null);
     const instanceRef = useRef<QrCodeStylingType | null>(null);
     const [isReady, setIsReady] = useState(false);
+    const imageLoadPromiseRef = useRef<Promise<void> | null>(null);
 
     // Lazy load library once
     useEffect(() => {
@@ -47,6 +48,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     // Helper to apply current config to instance
     const applyConfig = useCallback(() => {
         if (!instanceRef.current) return;
+        // Base QR update
         instanceRef.current.update({
             width: config.size,
             height: config.size,
@@ -55,53 +57,61 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
             qrOptions: { errorCorrectionLevel: config.errorCorrection },
             backgroundOptions: { color: config.background },
             dotsOptions: { color: config.foreground },
+            image: undefined
         });
-        const logoSource = config.logoCroppedDataUrl;
-        if (logoSource) {
-            instanceRef.current.update({
-                image: logoSource,
-                imageOptions: {
-                    crossOrigin: 'anonymous',
-                    hideBackgroundDots: true,
-                    imageSize: config.logoSizeRatio,
-                    margin: 4
-                }
+
+        // Handle logo (cropped preferred)
+        const setImage = (src: string) => {
+            const img = new Image();
+            // Data URLs don't need crossOrigin; leave unset improves reliability
+            imageLoadPromiseRef.current = new Promise(resolve => {
+                img.onload = () => {
+                    instanceRef.current?.update({
+                        image: src,
+                        imageOptions: {
+                            hideBackgroundDots: true,
+                            imageSize: config.logoSizeRatio,
+                            margin: 4
+                        }
+                    });
+                    resolve();
+                };
+                img.onerror = () => {
+                    // Fallback: still resolve so downloads proceed (will show white box if truly broken)
+                    resolve();
+                };
             });
+            img.src = src;
+        };
+
+        if (config.logoCroppedDataUrl) {
+            setImage(config.logoCroppedDataUrl);
         } else if (config.logoFile) {
             const reader = new FileReader();
             reader.onload = () => {
-                instanceRef.current?.update({
-                    image: reader.result as string,
-                    imageOptions: {
-                        crossOrigin: 'anonymous',
-                        hideBackgroundDots: true,
-                        imageSize: config.logoSizeRatio,
-                        margin: 4
-                    }
-                });
+                if (typeof reader.result === 'string') setImage(reader.result);
             };
             reader.readAsDataURL(config.logoFile);
         } else {
-            instanceRef.current.update({ image: undefined });
+            imageLoadPromiseRef.current = null;
         }
     }, [config]);
 
-    // Debounced update on config changes
+    // Immediate update on config changes (debounce removed to avoid race with export)
     useEffect(() => {
         if (!instanceRef.current) return;
-        const handle = setTimeout(() => {
-            applyConfig();
-        }, 200); // 200ms debounce
-        return () => clearTimeout(handle);
+        applyConfig();
     }, [applyConfig]);
 
     const toPng = useCallback(async () => {
         if (!instanceRef.current) return null;
+        if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
         return await instanceRef.current.getRawData('png');
     }, []);
 
     const toSvg = useCallback(async () => {
         if (!instanceRef.current) return null;
+        if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
         return await instanceRef.current.getRawData('svg');
     }, []);
 
