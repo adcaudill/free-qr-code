@@ -40,15 +40,15 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
                         <TextField type="number" label="Margin" value={config.margin} onChange={e => onChange({ margin: clamp(+e.target.value, 0, 32) })} size="small" fullWidth InputProps={{ inputProps: { min: 0, max: 32 } }} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
-                        <TextField type="color" label="Foreground" value={config.foreground} onChange={e => onChange({ foreground: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} />
+                        <TextField type="color" label="Foreground" aria-label="Foreground color" value={config.foreground} onChange={e => onChange({ foreground: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
-                        <TextField type="color" label="Background" value={config.background} onChange={e => onChange({ background: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} />
+                        <TextField type="color" label="Background" aria-label="Background color" value={config.background} onChange={e => onChange({ background: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
                         <Box>
                             <Typography variant="caption" display="block" gutterBottom>Logo (center)</Typography>
-                            <input aria-label="Logo file" type="file" accept="image/*" onChange={e => onChange({ logoFile: e.target.files?.[0] })} />
+                            <input aria-label="Logo image file" type="file" accept="image/*" onChange={e => onChange({ logoFile: e.target.files?.[0] })} style={{ display: 'block' }} />
                         </Box>
                     </Grid>
                     <Grid item xs={12} sm={6} md={4}>
