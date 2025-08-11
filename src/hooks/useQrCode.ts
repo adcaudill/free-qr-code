@@ -16,6 +16,8 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     const instanceRef = useRef<QrCodeStylingType | null>(null);
     const [isReady, setIsReady] = useState(false);
     const imageLoadPromiseRef = useRef<Promise<void> | null>(null);
+    const debounceTimerRef = useRef<number | null>(null);
+    const updatePromiseRef = useRef<Promise<void> | null>(null);
 
     // Lazy load library once
     useEffect(() => {
@@ -46,7 +48,7 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     }, []);
 
     // Helper to apply current config to instance
-    const applyConfig = useCallback(() => {
+    function applyConfig() {
         if (!instanceRef.current) return;
         // Base QR update
         instanceRef.current.update({
@@ -95,23 +97,49 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
         } else {
             imageLoadPromiseRef.current = null;
         }
+    }
+
+    const scheduleUpdate = useCallback(() => {
+        if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
+        updatePromiseRef.current = new Promise<void>(resolve => {
+            debounceTimerRef.current = window.setTimeout(() => {
+                applyConfig();
+                // Wait on image load if present
+                if (imageLoadPromiseRef.current) {
+                    imageLoadPromiseRef.current.then(() => resolve());
+                } else {
+                    resolve();
+                }
+            }, 200);
+        });
     }, [config]);
 
-    // Immediate update on config changes (debounce removed to avoid race with export)
+    // Debounced update on config changes
     useEffect(() => {
         if (!instanceRef.current) return;
-        applyConfig();
-    }, [applyConfig]);
+        scheduleUpdate();
+    }, [scheduleUpdate]);
+
+    const flushPending = async () => {
+        if (debounceTimerRef.current) {
+            // force immediate update
+            window.clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+            applyConfig();
+        }
+        if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
+        if (updatePromiseRef.current) await updatePromiseRef.current;
+    };
 
     const toPng = useCallback(async () => {
         if (!instanceRef.current) return null;
-        if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
+        await flushPending();
         return await instanceRef.current.getRawData('png');
     }, []);
 
     const toSvg = useCallback(async () => {
         if (!instanceRef.current) return null;
-        if (imageLoadPromiseRef.current) await imageLoadPromiseRef.current;
+        await flushPending();
         return await instanceRef.current.getRawData('svg');
     }, []);
 
