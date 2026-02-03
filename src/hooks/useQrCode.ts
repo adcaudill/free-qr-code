@@ -23,7 +23,7 @@ function gradientOrSolidDots(config: QrConfig) {
 type QrCodeStylingType = any;
 
 interface UseQrCodeReturn {
-    ref: React.RefObject<HTMLDivElement>;
+    ref: React.RefObject<HTMLDivElement | null>;
     toPng: () => Promise<Blob | null>;
     toSvg: () => Promise<Blob | null>;
     isReady: boolean;
