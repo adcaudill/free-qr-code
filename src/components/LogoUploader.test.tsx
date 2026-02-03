@@ -95,7 +95,7 @@ describe('LogoUploader crop interactions', () => {
 
         // Change handler should receive a data url
         expect(handleChange).toHaveBeenCalled();
-        const last = handleChange.mock.calls.pop()[0];
+        const last = handleChange.mock.calls.pop()![0];
         expect(last.logoCroppedDataUrl).toMatch(/^data:image\/png;base64,/);
     });
 });
