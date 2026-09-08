@@ -17,14 +17,18 @@ export interface QrConfig {
     gradientRotation: number; // degrees 0-360
     size: number; // pixels
     errorCorrection: ErrorCorrectionLevel;
-    margin: number; // quiet zone
+    margin: number; // quiet zone, in modules (squares); see utils/quietZone.ts
     foreground: string; // hex
     background: string; // hex
     logoFile?: File;
     logoCroppedDataUrl?: string; // optional processed/cropped image
-    logoSizeRatio: number; // 0 - 0.5 typically
+    logoSizeRatio: number; // 0 - 1; the library scales this by the error correction level, so 1 is not a full cover
     format: 'png' | 'svg';
 }
+
+// Quiet zone bounds, in modules. 4 is the QR standard; past ~16 the code itself
+// is squeezed into so little of the canvas that it stops being useful.
+export const QUIET_ZONE_MAX = 16;
 
 export const defaultConfig: QrConfig = {
     text: '',

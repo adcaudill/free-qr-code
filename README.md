@@ -13,7 +13,8 @@ Search phrases this project intentionally supports: free QR code generator, WiFi
 - Advanced styling: dot/module shapes, corner styles, solid or linear/radial gradient foregrounds
 - Real-time scan quality assessment (contrast, logo risk, quiet zone) with one-click Auto-Fix
 - Logo upload + crop (processed locally, never uploaded) with keyboard accessible cropper
-- Debounced & reliable exports (flush logic ensures latest QR when you download)
+- Exports always match what you configured (rendered fresh at download time)
+- Settings remembered in your browser between visits (never the WiFi password)
 - PNG & SVG export (crisp vector for print; raster for quick sharing)
 - Dark / light mode (auto system detection) + accessible color controls
 - Fully client-side (no server, no analytics); ideal for privacy-centric environments
@@ -44,12 +45,12 @@ If issues are detected, Auto-Fix can:
 
 - Force high contrast (black on white)
 - Shrink an oversized logo
-- Raise error correction (up to H)
+- Raise error correction (up to Highest)
 - Ensure a minimal margin
 
 ## Styling Tips
 
-- Higher error correction (Q/H) tolerates bigger logos but increases density.
+- Higher error correction (High/Highest) tolerates bigger logos but increases density.
 - Maintain strong contrast (dark foreground on light background) for best reliability.
 - Excessive gradients or very light colors can reduce scan speed—test with multiple devices.
 - Fancy dot shapes are cosmetic; readability still depends on contrast and quiet zone.
@@ -68,8 +69,9 @@ SVG exports are text (XML) and infinitely scalable. PNG exports are raster; choo
 - React + TypeScript + Vite
 - Material UI (MUI) for theming
 - `qr-code-styling` for QR generation & advanced styling/gradients
+- `qrcode-generator` to size the quiet zone in modules rather than raw pixels
 - `zod` for lightweight validation
-- Vitest + React Testing Library for a growing test suite (29 tests covering builders, styling, debounce flush, auto‑fix)
+- Vitest + React Testing Library for a growing test suite (53 tests covering builders, styling, exports, quiet zone, persistence, auto-fix)
 
 ## Local Development
 
@@ -105,6 +107,7 @@ Cloudflare Pages settings:
 - No outbound API calls for QR generation
 - No analytics, tracking, or cookies
 - All image processing & QR rendering performed in-browser
+- Settings are kept in your browser's local storage only; the WiFi password is never stored
 - Open source—inspect or fork freely
 
 ## Roadmap / Potential Enhancements
