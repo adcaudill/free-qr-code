@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useQrCode } from './useQrCode';
 import { defaultConfig, QrConfig } from '../types';
 import { autoFixLogic } from '../components/AdvancedOptions';
+import { quietZoneToPixels } from '../utils/quietZone';
 
 // Fake QR implementation capturing constructor + update patches
 class FakeQr {
@@ -64,7 +65,9 @@ describe('useQrCode integration scenarios', () => {
         const last = FakeQr.last.updates.at(-1);
         expect(last).toBeTruthy();
         expect(last.qrOptions.errorCorrectionLevel).toBe('H');
-        expect(last.margin).toBe(2); // margin included in update patch
+        // margin is stored in modules and converted to the pixel margin the
+        // library expects
+        expect(last.margin).toBe(quietZoneToPixels(fixed.margin, fixed.size, 'https://example.com', 'H'));
         // dotsOptions / backgroundOptions always resent; check effective colors
         expect(last.backgroundOptions.color).toBe('#ffffff');
         // gradient unused => dotsOptions has color directly
