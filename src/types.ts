@@ -22,7 +22,7 @@ export interface QrConfig {
     background: string; // hex
     logoFile?: File;
     logoCroppedDataUrl?: string; // optional processed/cropped image
-    logoSizeRatio: number; // 0 - 0.5 typically
+    logoSizeRatio: number; // 0 - 1; the library scales this by the error correction level, so 1 is not a full cover
     format: 'png' | 'svg';
 }
 
