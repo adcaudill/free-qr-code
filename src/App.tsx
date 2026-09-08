@@ -14,17 +14,30 @@ import { buildQrData } from './utils/contentBuilders';
 import { useQrCode } from './hooks/useQrCode';
 import { ThemeToggle } from './components/ThemeToggle';
 import { normalizeUrl } from './utils/validation';
+import { clearConfig, loadConfig, saveConfig } from './utils/persistence';
 
 const STORAGE_KEY = 'freeqr-theme';
 
 export const App: React.FC = () => {
     const [mode, setMode] = React.useState<'light' | 'dark'>(() => (localStorage.getItem(STORAGE_KEY) as 'light' | 'dark') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
-    const [config, setConfig] = React.useState<QrConfig>({ ...defaultConfig });
+    const [config, setConfig] = React.useState<QrConfig>(loadConfig);
     const { ref: qrRef, toPng, toSvg, isReady } = useQrCode(config);
 
     function patch(p: Partial<QrConfig>) {
         setConfig(c => ({ ...c, ...p }));
     }
+
+    function reset() {
+        clearConfig();
+        setConfig({ ...defaultConfig });
+    }
+
+    // Remember the settings between visits. Debounced so typing does not write
+    // the (logo sized) payload to storage on every keystroke.
+    React.useEffect(() => {
+        const timer = window.setTimeout(() => saveConfig(config), 300);
+        return () => window.clearTimeout(timer);
+    }, [config]);
 
     // Ensure text stays in sync when content changes
     React.useEffect(() => {
@@ -72,7 +85,7 @@ export const App: React.FC = () => {
                     <Stack flex={1} spacing={2}>
                         <SimpleForm config={config} onPatch={patch} onDownload={handleDownload} disabled={!isReady || !config.text} />
                         <React.Suspense fallback={<Paper sx={{ p: 2 }}><Typography variant="body2">Loading advanced options…</Typography></Paper>}>
-                            <AdvancedOptions config={config} onChange={patch} />
+                            <AdvancedOptions config={config} onChange={patch} onReset={reset} />
                         </React.Suspense>
                     </Stack>
                     <Paper sx={{ p: 2, flexBasis: 340, flexGrow: 0 }}>

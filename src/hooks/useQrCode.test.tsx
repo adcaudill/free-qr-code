@@ -1,13 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useQrCode } from './useQrCode';
-import type { QrConfig } from '../types';
+import { defaultConfig, type QrConfig } from '../types';
 
 // Mock qr-code-styling
 class FakeQr {
     opts: any;
+    extension: ((svg: SVGElement) => void) | null = null;
     constructor(opts: any) { this.opts = opts; }
     append() {/* noop */ }
+    // the hook draws the caption through the library's extension hook
+    applyExtension(fn: (svg: SVGElement) => void) { this.extension = fn; }
     update(patch: any) { this.opts = { ...this.opts, ...patch }; }
     async getRawData(fmt: string) {
         const text = fmt + (this.opts.image ? 'withImage' : 'noImage');
@@ -30,27 +33,14 @@ global.Image = class {
     set src(_v: string) { setTimeout(() => { this.onload && this.onload(); }, 0); }
 } as unknown as typeof Image;
 
+// spread the defaults rather than restating them: every new option would
+// otherwise have to be added here too
 const baseConfig: QrConfig = {
+    ...defaultConfig,
     text: 'https://example.com',
     contentType: 'url',
     url: 'https://example.com',
-    wifi: { ssid: '', password: '', security: 'WPA', hidden: false },
-    vcard: { firstName: '', lastName: '', org: '', title: '', phone: '', email: '', url: '' },
-    sms: { phone: '', message: '' },
-    dotStyle: 'rounded',
-    cornerSquareStyle: 'square',
-    cornerDotStyle: 'dot',
-    useGradient: false,
-    gradientColor: '#0055FF',
-    gradientType: 'linear',
-    gradientRotation: 0,
-    size: 300,
-    margin: 4,
-    foreground: '#000000',
-    background: '#ffffff',
-    errorCorrection: 'M',
-    logoSizeRatio: 0.2,
-    format: 'png'
+    size: 300
 };
 
 describe('useQrCode', () => {
@@ -72,7 +62,6 @@ describe('useQrCode', () => {
         const blob = await result.current.toPng();
         if (!blob) return; // if instance not ready skip (mock limitation)
         const text = await (blob as any).text();
-        // Debounce timing may yield either state; ensure it produced some output.
-        expect(text.includes('withImage') || text.includes('noImage')).toBe(true);
+        expect(text.includes('withImage')).toBe(true);
     }, 8000);
 });
