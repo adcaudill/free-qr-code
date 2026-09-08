@@ -38,6 +38,13 @@ const storedSchema = z.object({
     logoSizeRatio: z.number(),
     logoColorOverlay: z.boolean(),
     logoColor: z.string(),
+    captionText: z.string(),
+    captionPosition: z.enum(['above', 'below']),
+    captionFontFamily: z.string(),
+    captionFontStyle: z.enum(['normal', 'bold', 'italic', 'bold-italic']),
+    captionFontSize: z.number(),
+    captionColor: z.string(),
+    captionOffset: z.number(),
     format: z.enum(['png', 'svg'])
 }).partial();
 
@@ -92,6 +99,13 @@ export function saveConfig(config: QrConfig): void {
         logoSizeRatio: config.logoSizeRatio,
         logoColorOverlay: config.logoColorOverlay,
         logoColor: config.logoColor,
+        captionText: config.captionText,
+        captionPosition: config.captionPosition,
+        captionFontFamily: config.captionFontFamily,
+        captionFontStyle: config.captionFontStyle,
+        captionFontSize: config.captionFontSize,
+        captionColor: config.captionColor,
+        captionOffset: config.captionOffset,
         format: config.format
     };
     if (config.logoCroppedDataUrl && config.logoCroppedDataUrl.length <= MAX_LOGO_CHARS) {

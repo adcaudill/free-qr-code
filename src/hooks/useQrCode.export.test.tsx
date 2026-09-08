@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useQrCode } from './useQrCode';
 import { defaultConfig, QrConfig } from '../types';
+import { svgSize } from '../utils/caption';
 
 // jsdom has no canvas, so the tint itself is covered in utils/logoTint.test.ts;
 // here it is stubbed to prove the wiring reaches the exported file.
@@ -79,6 +80,31 @@ describe('useQrCode SVG export', () => {
         const svg = await exportedSvg(result.current.toSvg);
         expect(svg).toMatch(/<image/);
         expect(svg).not.toContain('-tinted-');
+    }, 15000);
+
+    it('draws the caption into the exported svg and grows the canvas for it', async () => {
+        const { result } = renderHook((c: QrConfig) => useQrCode(c), {
+            initialProps: cfg({ captionText: 'Widget 9000', captionFontSize: 16, captionOffset: 8 })
+        });
+        await settle(50);
+        const svg = await exportedSvg(result.current.toSvg);
+
+        expect(svg).toContain('Widget 9000');
+        expect(svg).toMatch(/<text[^>]*text-anchor="middle"/);
+        // 256 plus the caption band
+        expect(svgSize(svg)).toEqual({ width: 256, height: 285 });
+        // and the qr itself is still in there
+        expect(svg).toMatch(/<image|<path|<rect/);
+    }, 15000);
+
+    it('does not reject on a PNG export of a captioned code', async () => {
+        const { result } = renderHook((c: QrConfig) => useQrCode(c), {
+            initialProps: cfg({ captionText: 'Widget 9000' })
+        });
+        await settle(50);
+        // jsdom cannot rasterise, so this is null here; the point is that the
+        // caption path fails softly instead of throwing
+        await expect(result.current.toPng()).resolves.toBeNull();
     }, 15000);
 
     it('drops the gradient when it is switched back off', async () => {

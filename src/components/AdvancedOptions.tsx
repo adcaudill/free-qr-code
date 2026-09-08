@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button, FormControlLabel, Switch } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Divider, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button, FormControlLabel, Switch } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { QUIET_ZONE_MAX, type QrConfig } from '../types';
+import { CAPTION_FONTS, CAPTION_FONT_STYLES } from '../utils/caption';
 import { assessScanability } from '../utils/scanQuality';
 import { LogoUploader } from './LogoUploader';
 
@@ -177,6 +178,44 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange, onReset }) 
                             <MenuItem value="svg">SVG</MenuItem>
                         </TextField>
                     </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <Divider sx={{ mt: 1 }}>
+                            <Typography variant="caption" color="text.secondary">Caption</Typography>
+                        </Divider>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 8 }}>
+                        <TextField fullWidth size="small" label="Caption text" value={config.captionText} onChange={e => onChange({ captionText: e.target.value })} helperText="Drawn outside the code; leave empty for none" />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <TextField select fullWidth size="small" label="Position" value={config.captionPosition} onChange={e => onChange({ captionPosition: e.target.value as QrConfig['captionPosition'] })}>
+                            <MenuItem value="below">Below the code</MenuItem>
+                            <MenuItem value="above">Above the code</MenuItem>
+                        </TextField>
+                    </Grid>
+                    {config.captionText.trim() !== '' && (
+                        <>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <TextField select fullWidth size="small" label="Font" value={config.captionFontFamily} onChange={e => onChange({ captionFontFamily: e.target.value })}>
+                                    {CAPTION_FONTS.map(f => <MenuItem key={f.value} value={f.value} style={{ fontFamily: f.value }}>{f.label}</MenuItem>)}
+                                </TextField>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <TextField select fullWidth size="small" label="Style" value={config.captionFontStyle} onChange={e => onChange({ captionFontStyle: e.target.value as QrConfig['captionFontStyle'] })}>
+                                    {CAPTION_FONT_STYLES.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                                </TextField>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <NumberField label="Font size (px)" value={config.captionFontSize} min={6} max={256} onCommit={v => onChange({ captionFontSize: v })} />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <NumberField label="Gap from code (px)" value={config.captionOffset} min={0} max={512} onCommit={v => onChange({ captionOffset: v })} />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                                <TextField type="color" label="Caption Color" aria-label="Caption color" value={config.captionColor} onChange={e => onChange({ captionColor: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
+                            </Grid>
+                        </>
+                    )}
                     <Grid size={{ xs: 12 }}>
                         <Stack spacing={1}>
                             <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" flexWrap="wrap">
