@@ -13,7 +13,7 @@ Search phrases this project intentionally supports: free QR code generator, WiFi
 - Advanced styling: dot/module shapes, corner styles, solid or linear/radial gradient foregrounds
 - Real-time scan quality assessment (contrast, logo risk, quiet zone) with one-click Auto-Fix
 - Logo upload + crop (processed locally, never uploaded) with keyboard accessible cropper
-- Debounced & reliable exports (flush logic ensures latest QR when you download)
+- Exports always match what you configured (rendered fresh at download time)
 - PNG & SVG export (crisp vector for print; raster for quick sharing)
 - Dark / light mode (auto system detection) + accessible color controls
 - Fully client-side (no server, no analytics); ideal for privacy-centric environments
@@ -68,8 +68,9 @@ SVG exports are text (XML) and infinitely scalable. PNG exports are raster; choo
 - React + TypeScript + Vite
 - Material UI (MUI) for theming
 - `qr-code-styling` for QR generation & advanced styling/gradients
+- `qrcode-generator` to size the quiet zone in modules rather than raw pixels
 - `zod` for lightweight validation
-- Vitest + React Testing Library for a growing test suite (29 tests covering builders, styling, debounce flush, auto‑fix)
+- Vitest + React Testing Library for a growing test suite (40 tests covering builders, styling, exports, quiet zone, auto-fix)
 
 ## Local Development
 
