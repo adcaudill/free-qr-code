@@ -36,6 +36,8 @@ const storedSchema = z.object({
     background: z.string(),
     logoCroppedDataUrl: z.string(),
     logoSizeRatio: z.number(),
+    logoColorOverlay: z.boolean(),
+    logoColor: z.string(),
     format: z.enum(['png', 'svg'])
 }).partial();
 
@@ -88,6 +90,8 @@ export function saveConfig(config: QrConfig): void {
         foreground: config.foreground,
         background: config.background,
         logoSizeRatio: config.logoSizeRatio,
+        logoColorOverlay: config.logoColorOverlay,
+        logoColor: config.logoColor,
         format: config.format
     };
     if (config.logoCroppedDataUrl && config.logoCroppedDataUrl.length <= MAX_LOGO_CHARS) {

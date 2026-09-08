@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { QrConfig } from '../types';
 import { buildQrData } from '../utils/contentBuilders';
+import { tintLogo } from '../utils/logoTint';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QrCodeStylingType = any;
@@ -58,9 +59,9 @@ async function buildOptions(config: QrConfig) {
     };
 }
 
-// Resolve the logo to a data URL. logoCroppedDataUrl is what the cropper
-// produces; logoFile is the raw fallback.
-function resolveLogo(config: QrConfig): Promise<string | undefined> {
+// Read the logo as a data URL. logoCroppedDataUrl is what the cropper produces;
+// logoFile is the raw fallback.
+function readLogo(config: QrConfig): Promise<string | undefined> {
     if (config.logoCroppedDataUrl) return Promise.resolve(config.logoCroppedDataUrl);
     const file = config.logoFile;
     if (!file) return Promise.resolve(undefined);
@@ -70,6 +71,12 @@ function resolveLogo(config: QrConfig): Promise<string | undefined> {
         reader.onerror = () => resolve(undefined);
         reader.readAsDataURL(file);
     });
+}
+
+async function resolveLogo(config: QrConfig): Promise<string | undefined> {
+    const source = await readLogo(config);
+    if (!source || !config.logoColorOverlay) return source;
+    return await tintLogo(source, config.logoColor);
 }
 
 async function loadLibrary(): Promise<QrCodeStylingType | null> {

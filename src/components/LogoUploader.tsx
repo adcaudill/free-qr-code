@@ -1,9 +1,24 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Box, Button, Stack, Typography, Slider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Stack, Typography, Slider, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material';
 import type { QrConfig } from '../types';
 
 interface Props { config: QrConfig; onChange: (patch: Partial<QrConfig>) => void; }
-interface Selection { x: number; y: number; size: number; }
+interface Selection { x: number; y: number; w: number; h: number; }
+
+// Square and Round keep a 1:1 selection; Free lets width and height move
+// independently; All takes the image as it is, whatever its shape.
+type CropShape = 'square' | 'round' | 'free' | 'all';
+const LOCKED_TO_SQUARE: CropShape[] = ['square', 'round'];
+const MIN_CROP = 16;
+
+const CROP_SHAPES: { value: CropShape; label: string }[] = [
+    { value: 'square', label: 'Square' },
+    { value: 'round', label: 'Round' },
+    { value: 'free', label: 'User defined' },
+    { value: 'all', label: 'All' }
+];
+
+function clamp(v: number, min: number, max: number) { return Math.min(Math.max(v, min), Math.max(min, max)); }
 
 const CHECKER = 'rgba(128,128,128,0.18)';
 const CHECKERBOARD = {
@@ -16,8 +31,10 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [image, setImage] = useState<HTMLImageElement | null>(null);
-    const [selection, setSelection] = useState<Selection>({ x: 0, y: 0, size: 100 });
+    const [selection, setSelection] = useState<Selection>({ x: 0, y: 0, w: 100, h: 100 });
+    const [shape, setShape] = useState<CropShape>('square');
     const [scale, setScale] = useState(1);
+    const locked = LOCKED_TO_SQUARE.includes(shape);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const dragState = useRef<null | { type: 'move' | 'resize'; offsetX: number; offsetY: number }>(null);
 
@@ -28,7 +45,8 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
             img.onload = () => {
                 setImage(img);
                 const side = Math.min(img.width, img.height);
-                setSelection({ x: (img.width - side) / 2, y: (img.height - side) / 2, size: side });
+                setShape('square');
+                setSelection({ x: (img.width - side) / 2, y: (img.height - side) / 2, w: side, h: side });
                 // Adaptive scaling, bounded by what the dialog can actually show:
                 // the title, size slider and buttons take roughly 280px of height,
                 // and anything larger makes the crop area overflow.
@@ -51,13 +69,38 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
     const onDrop = (e: React.DragEvent) => { e.preventDefault(); handleFiles(e.dataTransfer.files); };
     const onDragOver = (e: React.DragEvent) => { e.preventDefault(); };
 
+    // Switching shape has to bring the selection with it, or the radio would
+    // claim a shape the crop does not have.
+    const changeShape = (next: CropShape) => {
+        setShape(next);
+        if (!image) return;
+        if (next === 'all') {
+            setSelection({ x: 0, y: 0, w: image.width, h: image.height });
+            return;
+        }
+        if (!LOCKED_TO_SQUARE.includes(next)) return;
+        setSelection(s => {
+            const side = Math.min(s.w, s.h, image.width, image.height);
+            // keep the same centre while squaring off
+            const x = clamp(s.x + (s.w - side) / 2, 0, image.width - side);
+            const y = clamp(s.y + (s.h - side) / 2, 0, image.height - side);
+            return { x, y, w: side, h: side };
+        });
+    };
+
     const applyCrop = () => {
         if (!image) return;
-        const { x, y, size } = selection;
+        const { x, y, w, h } = selection;
         const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
+        canvas.width = Math.round(w); canvas.height = Math.round(h);
         const ctx = canvas.getContext('2d'); if (!ctx) return;
-        ctx.drawImage(image, x, y, size, size, 0, 0, size, size);
+        if (shape === 'round' && typeof ctx.ellipse === 'function') {
+            // everything outside the circle stays transparent
+            ctx.beginPath();
+            ctx.ellipse(canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2, 0, 0, Math.PI * 2);
+            ctx.clip();
+        }
+        ctx.drawImage(image, x, y, w, h, 0, 0, canvas.width, canvas.height);
         onChange({ logoCroppedDataUrl: canvas.toDataURL('image/png') });
         setDialogOpen(false);
     };
@@ -69,84 +112,97 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
     };
 
     const onMouseDown = (e: React.MouseEvent) => {
-        if (!image) return;
+        if (!image || shape === 'all') return;
         const { ix, iy } = clientToImage(e.clientX, e.clientY);
         const handleArea = 20 / scale;
-        const inHandle = ix >= selection.x + selection.size - handleArea && iy >= selection.y + selection.size - handleArea;
+        const inHandle = ix >= selection.x + selection.w - handleArea && iy >= selection.y + selection.h - handleArea;
         if (inHandle) {
-            dragState.current = { type: 'resize', offsetX: ix - (selection.x + selection.size), offsetY: iy - (selection.y + selection.size) };
+            dragState.current = { type: 'resize', offsetX: ix - (selection.x + selection.w), offsetY: iy - (selection.y + selection.h) };
             return;
         }
-        const inside = ix >= selection.x && ix <= selection.x + selection.size && iy >= selection.y && iy <= selection.y + selection.size;
+        const inside = ix >= selection.x && ix <= selection.x + selection.w && iy >= selection.y && iy <= selection.y + selection.h;
         if (inside) dragState.current = { type: 'move', offsetX: ix - selection.x, offsetY: iy - selection.y };
     };
     const onMouseMove = (e: React.MouseEvent) => {
         if (!dragState.current || !image) return;
         const { ix, iy } = clientToImage(e.clientX, e.clientY);
         if (dragState.current.type === 'move') {
-            let nx = ix - dragState.current.offsetX;
-            let ny = iy - dragState.current.offsetY;
-            nx = Math.max(0, Math.min(nx, image.width - selection.size));
-            ny = Math.max(0, Math.min(ny, image.height - selection.size));
+            const nx = clamp(ix - dragState.current.offsetX, 0, image.width - selection.w);
+            const ny = clamp(iy - dragState.current.offsetY, 0, image.height - selection.h);
             setSelection(s => ({ ...s, x: nx, y: ny }));
+        } else if (locked) {
+            const side = clamp(
+                Math.max(ix - selection.x, iy - selection.y),
+                MIN_CROP,
+                Math.min(image.width - selection.x, image.height - selection.y)
+            );
+            setSelection(s => ({ ...s, w: side, h: side }));
         } else {
-            let newSize = Math.max(32, Math.max(ix - selection.x, iy - selection.y));
-            newSize = Math.min(newSize, image.width - selection.x, image.height - selection.y, Math.min(image.width, image.height));
-            setSelection(s => ({ ...s, size: newSize }));
+            const w = clamp(ix - selection.x, MIN_CROP, image.width - selection.x);
+            const h = clamp(iy - selection.y, MIN_CROP, image.height - selection.y);
+            setSelection(s => ({ ...s, w, h }));
         }
     };
     const endDrag = () => { dragState.current = null; };
 
     const sliderChange = (_: Event, v: number | number[]) => {
         if (!image) return;
-        let size = v as number;
-        size = Math.max(32, Math.min(size, Math.min(image.width, image.height)));
-        let { x, y } = selection;
-        if (x + size > image.width) x = image.width - size;
-        if (y + size > image.height) y = image.height - size;
-        setSelection({ x, y, size });
+        const side = clamp(v as number, MIN_CROP, Math.min(image.width, image.height));
+        setSelection(s => ({
+            x: Math.min(s.x, image.width - side),
+            y: Math.min(s.y, image.height - side),
+            w: side,
+            h: side
+        }));
     };
 
     const moveSelection = useCallback((dx: number, dy: number) => {
         setSelection(s => {
             if (!image) return s;
-            let x = s.x + dx;
-            let y = s.y + dy;
-            x = Math.max(0, Math.min(x, image.width - s.size));
-            y = Math.max(0, Math.min(y, image.height - s.size));
-            return { ...s, x, y };
+            return {
+                ...s,
+                x: clamp(s.x + dx, 0, image.width - s.w),
+                y: clamp(s.y + dy, 0, image.height - s.h)
+            };
         });
     }, [image]);
 
-    const resizeSelection = useCallback((delta: number) => {
+    // dw/dh are applied together for the locked shapes, so one arrow key still
+    // resizes a square as a square.
+    const resizeSelection = useCallback((dw: number, dh: number) => {
         setSelection(s => {
             if (!image) return s;
-            let size = s.size + delta;
-            size = Math.max(32, Math.min(size, Math.min(image.width, image.height)));
-            if (s.x + size > image.width) size = image.width - s.x;
-            if (s.y + size > image.height) size = image.height - s.y;
-            return { ...s, size };
+            if (LOCKED_TO_SQUARE.includes(shape)) {
+                const delta = dw !== 0 ? dw : dh;
+                const side = clamp(s.w + delta, MIN_CROP, Math.min(image.width - s.x, image.height - s.y));
+                return { ...s, w: side, h: side };
+            }
+            return {
+                ...s,
+                w: clamp(s.w + dw, MIN_CROP, image.width - s.x),
+                h: clamp(s.h + dh, MIN_CROP, image.height - s.y)
+            };
         });
-    }, [image]);
+    }, [image, shape]);
 
     const onKeyDown = (e: React.KeyboardEvent) => {
-        if (!image) return;
+        if (!image || shape === 'all') return;
         const step = e.altKey ? 10 : 1; // allow faster movement with Alt
         switch (e.key) {
             case 'ArrowLeft':
-                if (e.shiftKey) resizeSelection(-step); else moveSelection(-step, 0); e.preventDefault(); break;
+                if (e.shiftKey) resizeSelection(-step, 0); else moveSelection(-step, 0); e.preventDefault(); break;
             case 'ArrowRight':
-                if (e.shiftKey) resizeSelection(step); else moveSelection(step, 0); e.preventDefault(); break;
+                if (e.shiftKey) resizeSelection(step, 0); else moveSelection(step, 0); e.preventDefault(); break;
             case 'ArrowUp':
-                if (e.shiftKey) resizeSelection(step); else moveSelection(0, -step); e.preventDefault(); break;
+                if (e.shiftKey) resizeSelection(0, -step); else moveSelection(0, -step); e.preventDefault(); break;
             case 'ArrowDown':
-                if (e.shiftKey) resizeSelection(-step); else moveSelection(0, step); e.preventDefault(); break;
+                if (e.shiftKey) resizeSelection(0, step); else moveSelection(0, step); e.preventDefault(); break;
             case '+':
             case '=':
-                resizeSelection(step); e.preventDefault(); break;
+                resizeSelection(step, step); e.preventDefault(); break;
             case '-':
             case '_':
-                resizeSelection(-step); e.preventDefault(); break;
+                resizeSelection(-step, -step); e.preventDefault(); break;
             default:
                 break;
         }
@@ -159,7 +215,10 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
     useEffect(() => {
         if (dialogOpen && image && containerRef.current) {
             containerRef.current.focus({ preventScroll: true });
-            containerRef.current.parentElement?.closest('.MuiDialogContent-root')?.scrollTo({ top: 0 });
+            // scrollTop rather than scrollTo: the latter is missing in some
+            // environments and this runs in an effect, where a throw is fatal
+            const scroller = containerRef.current.parentElement?.closest('.MuiDialogContent-root');
+            if (scroller) scroller.scrollTop = 0;
         }
     }, [dialogOpen, image]);
 
@@ -173,7 +232,24 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                 aria-label="Drop logo image here or click to select"
             >
                 <Typography variant="body2" color="text.secondary">{config.logoCroppedDataUrl ? 'Replace logo (opens crop dialog)' : 'Drag & drop logo, or click to choose'}</Typography>
-                {config.logoCroppedDataUrl && <Box mt={1}><img src={config.logoCroppedDataUrl} alt="Logo preview" style={{ maxHeight: 64, maxWidth: '100%', objectFit: 'contain' }} /></Box>}
+                {config.logoCroppedDataUrl && (
+                    <Box mt={1} display="flex" justifyContent="center">
+                        {/* checkerboard so a white or light logo is still visible here */}
+                        <Box sx={{
+                            display: 'inline-flex',
+                            p: 0.5,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 0.5,
+                            backgroundColor: 'common.white',
+                            backgroundImage: CHECKERBOARD.image,
+                            backgroundSize: CHECKERBOARD.size,
+                            backgroundPosition: CHECKERBOARD.position
+                        }}>
+                            <img src={config.logoCroppedDataUrl} alt="Logo preview" style={{ maxHeight: 64, maxWidth: '100%', objectFit: 'contain' }} />
+                        </Box>
+                    </Box>
+                )}
             </Box>
             <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFiles(e.target.files)} />
 
@@ -216,7 +292,9 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                                 aria-describedby="crop-instructions"
                                 data-crop-x={selection.x}
                                 data-crop-y={selection.y}
-                                data-crop-size={selection.size}
+                                data-crop-w={selection.w}
+                                data-crop-h={selection.h}
+                                data-crop-shape={shape}
                             >
                                 <img
                                     src={image.src}
@@ -230,21 +308,60 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                                         <defs>
                                             <mask id="logo-crop-mask">
                                                 <rect x={0} y={0} width={image.width * scale} height={image.height * scale} fill="white" />
-                                                <rect x={selection.x * scale} y={selection.y * scale} width={selection.size * scale} height={selection.size * scale} fill="black" />
+                                                {shape === 'round' ? (
+                                                    <ellipse
+                                                        cx={(selection.x + selection.w / 2) * scale}
+                                                        cy={(selection.y + selection.h / 2) * scale}
+                                                        rx={(selection.w / 2) * scale}
+                                                        ry={(selection.h / 2) * scale}
+                                                        fill="black"
+                                                    />
+                                                ) : (
+                                                    <rect x={selection.x * scale} y={selection.y * scale} width={selection.w * scale} height={selection.h * scale} fill="black" />
+                                                )}
                                             </mask>
                                         </defs>
                                         <rect x={0} y={0} width={image.width * scale} height={image.height * scale} fill="rgba(0,0,0,0.45)" mask="url(#logo-crop-mask)" />
-                                        <rect x={selection.x * scale} y={selection.y * scale} width={selection.size * scale} height={selection.size * scale} fill="none" stroke="#fff" strokeWidth={2} />
-                                        <rect x={(selection.x + selection.size) * scale - 10} y={(selection.y + selection.size) * scale - 10} width={20} height={20} fill="#fff" stroke="#000" strokeWidth={1} />
+                                        {shape === 'round' && (
+                                            <ellipse
+                                                cx={(selection.x + selection.w / 2) * scale}
+                                                cy={(selection.y + selection.h / 2) * scale}
+                                                rx={(selection.w / 2) * scale}
+                                                ry={(selection.h / 2) * scale}
+                                                fill="none" stroke="#fff" strokeWidth={2}
+                                            />
+                                        )}
+                                        <rect x={selection.x * scale} y={selection.y * scale} width={selection.w * scale} height={selection.h * scale} fill="none" stroke="#fff" strokeWidth={shape === 'round' ? 1 : 2} strokeDasharray={shape === 'round' ? '4 4' : undefined} />
+                                        {shape !== 'all' && (
+                                            <rect x={(selection.x + selection.w) * scale - 10} y={(selection.y + selection.h) * scale - 10} width={20} height={20} fill="#fff" stroke="#000" strokeWidth={1} />
+                                        )}
                                     </svg>
                                 </Box>
                             </Box>
                         </Box>
                     )}
                     {image && (
-                        <Stack mt={2} direction="row" spacing={2} alignItems="center">
-                            <Typography variant="caption">Crop size</Typography>
-                            <Slider min={32} max={Math.min(image.width, image.height)} value={selection.size} onChange={sliderChange} />
+                        <Stack mt={2} spacing={1}>
+                            <FormControl>
+                                <FormLabel id="crop-shape-label" sx={{ fontSize: 12 }}>Crop shape</FormLabel>
+                                <RadioGroup row aria-labelledby="crop-shape-label" value={shape} onChange={e => changeShape(e.target.value as CropShape)}>
+                                    {CROP_SHAPES.map(s => (
+                                        <FormControlLabel key={s.value} value={s.value} control={<Radio size="small" />} label={s.label} />
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                            {locked ? (
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Typography variant="caption">Crop size</Typography>
+                                    <Slider min={MIN_CROP} max={Math.min(image.width, image.height)} value={selection.w} onChange={sliderChange} />
+                                </Stack>
+                            ) : (
+                                <Typography variant="caption" color="text.secondary">
+                                    {shape === 'all'
+                                        ? `Using the whole image (${Math.round(image.width)} x ${Math.round(image.height)})`
+                                        : `Drag inside to move, drag the corner handle to resize (${Math.round(selection.w)} x ${Math.round(selection.h)})`}
+                                </Typography>
+                            )}
                         </Stack>
                     )}
                     <Box id="crop-instructions" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, border: 0, clip: 'rect(0 0 0 0)', overflow: 'hidden', whiteSpace: 'nowrap' }}>

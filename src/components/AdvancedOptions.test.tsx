@@ -52,6 +52,22 @@ describe('AdvancedOptions number fields', () => {
         expect(size.value).toBe('256');
     });
 
+    it('reveals the logo colour only once the overlay is switched on', () => {
+        const { onChange } = setup({ logoColorOverlay: false });
+        expect(screen.queryByLabelText('Logo Color')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByLabelText('Color Overlay'));
+        expect(onChange).toHaveBeenCalledWith({ logoColorOverlay: true });
+    });
+
+    it('patches the logo colour', () => {
+        const { onChange } = setup({ logoColorOverlay: true, logoColor: '#1976d2' });
+        const colour = screen.getByLabelText('Logo Color') as HTMLInputElement;
+        expect(colour.value).toBe('#1976d2');
+        fireEvent.change(colour, { target: { value: '#ff0000' } });
+        expect(onChange).toHaveBeenCalledWith({ logoColor: '#ff0000' });
+    });
+
     it('names the error correction levels in words', () => {
         setup({ errorCorrection: 'Q' });
         expect(screen.getByText('High (25%)')).toBeInTheDocument();
