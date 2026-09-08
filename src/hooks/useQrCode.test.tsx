@@ -72,7 +72,6 @@ describe('useQrCode', () => {
         const blob = await result.current.toPng();
         if (!blob) return; // if instance not ready skip (mock limitation)
         const text = await (blob as any).text();
-        // Debounce timing may yield either state; ensure it produced some output.
-        expect(text.includes('withImage') || text.includes('noImage')).toBe(true);
+        expect(text.includes('withImage')).toBe(true);
     }, 8000);
 });

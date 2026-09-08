@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Accordion, AccordionDetails, AccordionSummary, Slider, TextField, Typography, MenuItem, Alert, Stack, Chip, Button, FormControlLabel, Switch } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import type { QrConfig } from '../types';
+import { QUIET_ZONE_MAX, type QrConfig } from '../types';
 import { assessScanability } from '../utils/scanQuality';
 import { LogoUploader } from './LogoUploader';
 
@@ -39,7 +39,7 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange }) => {
                         <TextField type="number" label="Size (px)" value={config.size} onChange={e => onChange({ size: clamp(+e.target.value, 128, 1024) })} size="small" fullWidth InputProps={{ inputProps: { min: 128, max: 1024 } }} />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                        <TextField type="number" label="Margin" value={config.margin} onChange={e => onChange({ margin: clamp(+e.target.value, 0, 32) })} size="small" fullWidth InputProps={{ inputProps: { min: 0, max: 32 } }} />
+                        <TextField type="number" label="Quiet zone" value={config.margin} onChange={e => onChange({ margin: clamp(+e.target.value, 0, QUIET_ZONE_MAX) })} size="small" fullWidth InputProps={{ inputProps: { min: 0, max: QUIET_ZONE_MAX } }} helperText="Blank border, in squares (4 is standard)" />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField type="color" label="Foreground" aria-label="Foreground color" value={config.foreground} onChange={e => onChange({ foreground: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
