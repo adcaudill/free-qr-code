@@ -36,7 +36,7 @@ export function assessScanability(params: { foreground: string; background: stri
     else logoRisk = 'high';
     const rec: string[] = [];
     if (!contrastOk) rec.push('Increase contrast between foreground and background.');
-    if (logoRisk !== 'low') rec.push('Reduce logo size or raise error correction to H.');
-    if (params.margin < 2) rec.push('Increase margin (quiet zone) to at least 2.');
+    if (logoRisk !== 'low') rec.push('Reduce logo size or raise error correction to Highest.');
+    if (params.margin < 2) rec.push('Increase the quiet zone to at least 2 squares.');
     return { contrastRatio: cr, contrastOk, logoRisk, recommendations: rec };
 }

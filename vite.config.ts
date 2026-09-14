@@ -10,7 +10,7 @@ export default defineConfig({
                 manualChunks: {
                     react: ['react', 'react-dom'],
                     mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-                    qr: ['qr-code-styling']
+                    qr: ['qr-code-styling', 'qrcode-generator']
                 }
             }
         }

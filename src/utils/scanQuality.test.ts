@@ -22,8 +22,8 @@ describe('scanQuality', () => {
         expect(highRisk.logoRisk).toBe('high');
     });
 
-    it('recommends margin increase when margin < 2', () => {
+    it('recommends a bigger quiet zone when the margin is under 2 modules', () => {
         const a = assessScanability({ foreground: '#000000', background: '#ffffff', errorCorrection: 'H', logoSizeRatio: 0.1, margin: 0 });
-        expect(a.recommendations.some(r => r.toLowerCase().includes('margin'))).toBe(true);
+        expect(a.recommendations.some(r => r.toLowerCase().includes('quiet zone'))).toBe(true);
     });
 });
