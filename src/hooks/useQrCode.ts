@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { QrConfig } from '../types';
 import { buildQrData } from '../utils/contentBuilders';
 import { tintLogo } from '../utils/logoTint';
+import { applyCaption, hasCaption, svgSize } from '../utils/caption';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QrCodeStylingType = any;
@@ -79,6 +80,30 @@ async function resolveLogo(config: QrConfig): Promise<string | undefined> {
     return await tintLogo(source, config.logoColor);
 }
 
+// Draw an svg into a canvas at its own size and hand back a PNG.
+// encodeURIComponent rather than base64: a caption can hold characters btoa
+// refuses to encode.
+function rasterize(svgText: string, width: number, height: number): Promise<Blob | null> {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onerror = () => resolve(null);
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { resolve(null); return; }
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob(blob => resolve(blob), 'image/png');
+            } catch {
+                resolve(null);
+            }
+        };
+        img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgText)}`;
+    });
+}
+
 async function loadLibrary(): Promise<QrCodeStylingType | null> {
     // In certain test/SSR teardown phases window can be undefined; bail early.
     if (typeof window === 'undefined') return null;
@@ -128,6 +153,9 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
                 const options = await buildOptions(configRef.current);
                 if (cancelled) return;
                 instanceRef.current = new QrCodeStyling(options);
+                // the caption is drawn by the library's own extension hook, so it
+                // survives every redraw and the preview matches the export
+                instanceRef.current.applyExtension((svg: SVGElement) => applyCaption(svg, configRef.current));
             }
             if (!cancelled && containerRef.current && instanceRef.current) {
                 containerRef.current.innerHTML = '';
@@ -161,8 +189,20 @@ export function useQrCode(config: QrConfig): UseQrCodeReturn {
     const exportBlob = useCallback(async (extension: 'png' | 'svg'): Promise<Blob | null> => {
         const QrCodeStyling = await loadLibrary();
         if (!QrCodeStyling) return null;
-        const instance = new QrCodeStyling(await buildOptions(configRef.current));
-        return await instance.getRawData(extension);
+        const config = configRef.current;
+        const instance = new QrCodeStyling(await buildOptions(config));
+
+        if (!hasCaption(config)) return await instance.getRawData(extension);
+
+        instance.applyExtension((svg: SVGElement) => applyCaption(svg, config));
+        const svgText = await (await instance.getRawData('svg') as Blob).text();
+        if (extension === 'svg') return new Blob([svgText], { type: 'image/svg+xml' });
+
+        // The library sizes its PNG canvas to the QR alone, so it would cut the
+        // caption off. Rasterise the grown svg instead.
+        const size = svgSize(svgText);
+        if (!size) return null;
+        return await rasterize(svgText, size.width, size.height);
     }, []);
 
     const toPng = useCallback(() => exportBlob('png'), [exportBlob]);

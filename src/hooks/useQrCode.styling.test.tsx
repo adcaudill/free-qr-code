@@ -7,8 +7,11 @@ import { defaultConfig, QrConfig } from '../types';
 class FakeQr {
     static last: any;
     opts: any;
+    extension: ((svg: SVGElement) => void) | null = null;
     constructor(opts: any) { this.opts = opts; FakeQr.last = { ctor: structuredClone(opts), updates: [] }; }
     append() { }
+    // the hook draws the caption through the library's extension hook
+    applyExtension(fn: (svg: SVGElement) => void) { this.extension = fn; }
     update(patch: any) { this.opts = { ...this.opts, ...patch }; FakeQr.last.updates.push(structuredClone(patch)); }
     async getRawData(fmt: string) {
         const encoder = new TextEncoder();

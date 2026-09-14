@@ -15,6 +15,7 @@ Search phrases this project intentionally supports: free QR code generator, WiFi
 - Logo upload + crop (processed locally, never uploaded) with keyboard accessible cropper
 - Square, round, free-form or whole-image crops, so rectangular logos stay rectangular
 - Optional color overlay to recolor a logo to any color, keeping its shape
+- Caption above or below the code, with font, style, size, color and spacing
 - Exports always match what you configured (rendered fresh at download time)
 - Settings remembered in your browser between visits (never the WiFi password)
 - PNG & SVG export (crisp vector for print; raster for quick sharing)
@@ -73,7 +74,7 @@ SVG exports are text (XML) and infinitely scalable. PNG exports are raster; choo
 - `qr-code-styling` for QR generation & advanced styling/gradients
 - `qrcode-generator` to size the quiet zone in modules rather than raw pixels
 - `zod` for lightweight validation
-- Vitest + React Testing Library for a growing test suite (72 tests covering builders, styling, exports, quiet zone, cropping, logo tint, persistence, auto-fix)
+- Vitest + React Testing Library for a growing test suite (91 tests covering builders, styling, exports, captions, quiet zone, cropping, logo tint, persistence, auto-fix)
 
 ## Local Development
 

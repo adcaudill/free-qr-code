@@ -68,6 +68,32 @@ describe('AdvancedOptions number fields', () => {
         expect(onChange).toHaveBeenCalledWith({ logoColor: '#ff0000' });
     });
 
+    it('hides the caption styling until there is caption text', () => {
+        const { onChange } = setup({ captionText: '' });
+        expect(screen.queryByLabelText('Font')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Style')).not.toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Caption text'), { target: { value: 'Widget 9000' } });
+        expect(onChange).toHaveBeenCalledWith({ captionText: 'Widget 9000' });
+    });
+
+    it('offers the caption styling once there is text', () => {
+        setup({ captionText: 'Widget 9000', captionFontStyle: 'bold' });
+        expect(screen.getByLabelText('Font')).toBeInTheDocument();
+        expect(screen.getByLabelText('Font size (px)')).toBeInTheDocument();
+        expect(screen.getByLabelText('Gap from code (px)')).toBeInTheDocument();
+        expect(screen.getByLabelText('Caption Color')).toBeInTheDocument();
+        expect(screen.getByText('Bold')).toBeInTheDocument();
+    });
+
+    it('moves the caption above the code', () => {
+        const { onChange } = setup({ captionText: 'Widget' });
+        expect(screen.getByText('Below the code')).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText('Gap from code (px)'), { target: { value: '20' } });
+        fireEvent.blur(screen.getByLabelText('Gap from code (px)'));
+        expect(onChange).toHaveBeenCalledWith({ captionOffset: 20 });
+    });
+
     it('names the error correction levels in words', () => {
         setup({ errorCorrection: 'Q' });
         expect(screen.getByText('High (25%)')).toBeInTheDocument();

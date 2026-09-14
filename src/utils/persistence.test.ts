@@ -51,6 +51,27 @@ describe('persistence', () => {
         expect(loaded.logoColor).toBe('#1976d2');
     });
 
+    it('round-trips the caption', () => {
+        saveConfig(cfg({
+            captionText: 'Widget 9000',
+            captionPosition: 'above',
+            captionFontFamily: 'Georgia, "Times New Roman", serif',
+            captionFontStyle: 'bold-italic',
+            captionFontSize: 24,
+            captionColor: '#123456',
+            captionOffset: 12
+        }));
+        expect(loadConfig()).toMatchObject({
+            captionText: 'Widget 9000',
+            captionPosition: 'above',
+            captionFontFamily: 'Georgia, "Times New Roman", serif',
+            captionFontStyle: 'bold-italic',
+            captionFontSize: 24,
+            captionColor: '#123456',
+            captionOffset: 12
+        });
+    });
+
     it('keeps a small logo and drops an oversized one', () => {
         const small = 'data:image/png;base64,AAAA';
         saveConfig(cfg({ logoCroppedDataUrl: small }));

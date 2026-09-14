@@ -6,8 +6,11 @@ import { defaultConfig, type QrConfig } from '../types';
 // Mock qr-code-styling
 class FakeQr {
     opts: any;
+    extension: ((svg: SVGElement) => void) | null = null;
     constructor(opts: any) { this.opts = opts; }
     append() {/* noop */ }
+    // the hook draws the caption through the library's extension hook
+    applyExtension(fn: (svg: SVGElement) => void) { this.extension = fn; }
     update(patch: any) { this.opts = { ...this.opts, ...patch }; }
     async getRawData(fmt: string) {
         const text = fmt + (this.opts.image ? 'withImage' : 'noImage');

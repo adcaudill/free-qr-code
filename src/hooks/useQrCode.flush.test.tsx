@@ -5,8 +5,11 @@ import { defaultConfig, QrConfig } from '../types';
 
 class FakeQr {
     opts: any;
+    extension: ((svg: SVGElement) => void) | null = null;
     constructor(o: any) { this.opts = o; }
     append() { }
+    // the hook draws the caption through the library's extension hook
+    applyExtension(fn: (svg: SVGElement) => void) { this.extension = fn; }
     update(p: any) { this.opts = { ...this.opts, ...p }; }
     async getRawData(fmt: string) {
         const enc = new TextEncoder();

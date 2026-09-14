@@ -25,6 +25,14 @@ export interface QrConfig {
     logoSizeRatio: number; // 0 - 1; the library scales this by the error correction level, so 1 is not a full cover
     logoColorOverlay: boolean; // recolor the logo to logoColor, keeping its shape
     logoColor: string; // hex, only used when logoColorOverlay is on
+    // Caption drawn outside the QR itself; empty text means no caption at all
+    captionText: string;
+    captionPosition: 'above' | 'below';
+    captionFontFamily: string; // css font stack, must resolve without a webfont
+    captionFontStyle: 'normal' | 'bold' | 'italic' | 'bold-italic';
+    captionFontSize: number; // px
+    captionColor: string; // hex
+    captionOffset: number; // px gap between the QR edge and the text
     format: 'png' | 'svg';
 }
 
@@ -54,5 +62,12 @@ export const defaultConfig: QrConfig = {
     logoSizeRatio: 0.2,
     logoColorOverlay: false,
     logoColor: '#1976d2',
+    captionText: '',
+    captionPosition: 'below',
+    captionFontFamily: 'Arial, Helvetica, sans-serif',
+    captionFontStyle: 'normal',
+    captionFontSize: 16,
+    captionColor: '#000000',
+    captionOffset: 8,
     format: 'png'
 };
