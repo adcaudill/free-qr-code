@@ -5,6 +5,13 @@ import type { QrConfig } from '../types';
 interface Props { config: QrConfig; onChange: (patch: Partial<QrConfig>) => void; }
 interface Selection { x: number; y: number; size: number; }
 
+const CHECKER = 'rgba(128,128,128,0.18)';
+const CHECKERBOARD = {
+    image: `linear-gradient(45deg, ${CHECKER} 25%, transparent 25%), linear-gradient(-45deg, ${CHECKER} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${CHECKER} 75%), linear-gradient(-45deg, transparent 75%, ${CHECKER} 75%)`,
+    size: '16px 16px',
+    position: '0 0, 0 8px, 8px -8px, -8px 0px'
+};
+
 export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -22,11 +29,16 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                 setImage(img);
                 const side = Math.min(img.width, img.height);
                 setSelection({ x: (img.width - side) / 2, y: (img.height - side) / 2, size: side });
-                // adaptive scaling
-                const targetMax = 600, targetMin = 260;
+                // Adaptive scaling, bounded by what the dialog can actually show:
+                // the title, size slider and buttons take roughly 280px of height,
+                // and anything larger makes the crop area overflow.
+                const maxHeight = Math.max(240, Math.min(600, window.innerHeight - 280));
+                const maxWidth = Math.max(240, Math.min(600, window.innerWidth - 100));
+                const fit = Math.min(maxWidth / img.width, maxHeight / img.height);
+                const shortest = Math.min(img.width, img.height);
                 let s = 1;
-                if (Math.max(img.width, img.height) > targetMax) s = targetMax / Math.max(img.width, img.height);
-                else if (Math.min(img.width, img.height) < targetMin) s = targetMin / Math.min(img.width, img.height);
+                if (fit < 1) s = fit;
+                else if (shortest < 260) s = Math.min(260 / shortest, fit);
                 setScale(s);
                 setDialogOpen(true);
             };
@@ -140,10 +152,14 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
         }
     };
 
-    // Auto focus crop container when dialog opens with image
+    // Auto focus crop container when dialog opens with image. preventScroll
+    // matters: the crop area is usually taller than the dialog's scroll box, and
+    // focusing it otherwise scrolls it into view from the bottom, hiding the top
+    // rows of the image.
     useEffect(() => {
         if (dialogOpen && image && containerRef.current) {
-            containerRef.current.focus();
+            containerRef.current.focus({ preventScroll: true });
+            containerRef.current.parentElement?.closest('.MuiDialogContent-root')?.scrollTo({ top: 0 });
         }
     }, [dialogOpen, image]);
 
@@ -168,7 +184,26 @@ export const LogoUploader: React.FC<Props> = ({ config, onChange }) => {
                         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
                             <Box
                                 ref={containerRef}
-                                sx={{ position: 'relative', width: image.width * scale, height: image.height * scale, userSelect: 'none', outline: 'none' }}
+                                sx={{
+                                    position: 'relative',
+                                    // content-box so the frame sits outside the image and the
+                                    // overlay svg stays aligned with it
+                                    boxSizing: 'content-box',
+                                    width: image.width * scale,
+                                    height: image.height * scale,
+                                    userSelect: 'none',
+                                    // Artwork often runs edge to edge, which looks cut off without
+                                    // something marking where the image actually ends. The
+                                    // checkerboard does the same job for transparent areas.
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    backgroundColor: 'common.white',
+                                    backgroundImage: CHECKERBOARD.image,
+                                    backgroundSize: CHECKERBOARD.size,
+                                    backgroundPosition: CHECKERBOARD.position,
+                                    outline: 'none',
+                                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 }
+                                }}
                                 onMouseDown={onMouseDown}
                                 onMouseMove={onMouseMove}
                                 onMouseUp={endDrag}

@@ -20,7 +20,7 @@ const items: { q: string; a: string }[] = [
     },
     {
         q: 'Why is error correction important?',
-        a: 'Higher levels (Q/H) let the code survive larger logos or damage, but increase pattern density. Balance logo size and readability.'
+        a: 'Higher levels (High/Highest) let the code survive larger logos or damage, but increase pattern density. Balance logo size and readability.'
     },
     {
         q: 'Why are logos limited in size?',
@@ -28,7 +28,7 @@ const items: { q: string; a: string }[] = [
     },
     {
         q: 'What does Auto-Fix do?',
-        a: 'It can enforce high contrast (black/white), shrink an oversized logo, raise error correction to H, and ensure a basic quiet zone.'
+        a: 'It can enforce high contrast (black/white), shrink an oversized logo, raise error correction to Highest, and ensure a basic quiet zone.'
     },
     {
         q: 'How do gradients affect scan reliability?',
