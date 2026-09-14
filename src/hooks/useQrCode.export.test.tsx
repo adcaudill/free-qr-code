@@ -1,7 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useQrCode } from './useQrCode';
 import { defaultConfig, QrConfig } from '../types';
+
+// jsdom has no canvas, so the tint itself is covered in utils/logoTint.test.ts;
+// here it is stubbed to prove the wiring reaches the exported file.
+vi.mock('../utils/logoTint', () => ({
+    tintLogo: vi.fn(async (src: string, color: string) => `${src}-tinted-${color.replace('#', '')}`)
+}));
 
 // These run against the real qr-code-styling so they assert what actually ends
 // up in the exported file. Only the browser image plumbing is stubbed; PNG is
@@ -55,6 +61,24 @@ describe('useQrCode SVG export', () => {
         const svg = await exportedSvg(result.current.toSvg);
         expect(svg).toMatch(/ABCDEF/i);
         expect(svg).toMatch(/<image/);
+    }, 15000);
+
+    it('embeds the recoloured logo when the colour overlay is on', async () => {
+        const { result } = renderHook((c: QrConfig) => useQrCode(c), {
+            initialProps: cfg({ logoCroppedDataUrl: PNG, logoColorOverlay: true, logoColor: '#1976d2' })
+        });
+        await settle(50);
+        expect(await exportedSvg(result.current.toSvg)).toContain('-tinted-1976d2');
+    }, 15000);
+
+    it('leaves the logo alone when the colour overlay is off', async () => {
+        const { result } = renderHook((c: QrConfig) => useQrCode(c), {
+            initialProps: cfg({ logoCroppedDataUrl: PNG, logoColorOverlay: false, logoColor: '#1976d2' })
+        });
+        await settle(50);
+        const svg = await exportedSvg(result.current.toSvg);
+        expect(svg).toMatch(/<image/);
+        expect(svg).not.toContain('-tinted-');
     }, 15000);
 
     it('drops the gradient when it is switched back off', async () => {

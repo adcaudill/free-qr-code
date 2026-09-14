@@ -161,6 +161,17 @@ export const AdvancedOptions: React.FC<Props> = ({ config, onChange, onReset }) 
                         <Slider size="small" value={Math.round(config.logoSizeRatio * 100)} onChange={(_, v) => onChange({ logoSizeRatio: (v as number) / 100 })} min={5} max={100} />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <FormControlLabel
+                            control={<Switch checked={config.logoColorOverlay} onChange={e => onChange({ logoColorOverlay: e.target.checked })} />}
+                            label="Color Overlay"
+                        />
+                    </Grid>
+                    {config.logoColorOverlay && (
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField type="color" label="Logo Color" aria-label="Logo color" value={config.logoColor} onChange={e => onChange({ logoColor: e.target.value })} size="small" fullWidth InputLabelProps={{ shrink: true }} inputProps={{ style: { padding: 2 } }} helperText="Recolors the logo, keeping its shape" sx={{ '& input[type=color]:focus-visible': { outline: '2px solid', outlineOffset: 2 } }} />
+                        </Grid>
+                    )}
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField select fullWidth label="Format" value={config.format} onChange={e => onChange({ format: e.target.value as 'png' | 'svg' })} size="small">
                             <MenuItem value="png">PNG</MenuItem>
                             <MenuItem value="svg">SVG</MenuItem>

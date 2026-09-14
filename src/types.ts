@@ -23,6 +23,8 @@ export interface QrConfig {
     logoFile?: File;
     logoCroppedDataUrl?: string; // optional processed/cropped image
     logoSizeRatio: number; // 0 - 1; the library scales this by the error correction level, so 1 is not a full cover
+    logoColorOverlay: boolean; // recolor the logo to logoColor, keeping its shape
+    logoColor: string; // hex, only used when logoColorOverlay is on
     format: 'png' | 'svg';
 }
 
@@ -50,5 +52,7 @@ export const defaultConfig: QrConfig = {
     foreground: '#000000',
     background: '#FFFFFF',
     logoSizeRatio: 0.2,
+    logoColorOverlay: false,
+    logoColor: '#1976d2',
     format: 'png'
 };

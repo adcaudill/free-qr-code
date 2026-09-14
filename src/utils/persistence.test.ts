@@ -44,6 +44,13 @@ describe('persistence', () => {
         expect(loaded.wifi).toEqual({ ssid: 'home', password: '', security: 'WPA', hidden: true });
     });
 
+    it('round-trips the logo colour overlay', () => {
+        saveConfig(cfg({ logoColorOverlay: true, logoColor: '#1976d2' }));
+        const loaded = loadConfig();
+        expect(loaded.logoColorOverlay).toBe(true);
+        expect(loaded.logoColor).toBe('#1976d2');
+    });
+
     it('keeps a small logo and drops an oversized one', () => {
         const small = 'data:image/png;base64,AAAA';
         saveConfig(cfg({ logoCroppedDataUrl: small }));
